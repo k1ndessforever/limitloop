@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LimitLoop Icon Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .icon-preview {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .icon {
+            border-radius: 20%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin: 0 auto 8px;
+        }
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .download-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 LimitLoop Icon Generator</h1>
+        <p>Generate all the required icons for your PWA app. Click on each icon to download it.</p>
+        
+        <div class="instructions">
+            <h3>📋 How to use:</h3>
+            <ol>
+                <li>Click "Generate All Icons" below</li>
+                <li>Click on each icon to download it automatically</li>
+                <li>Save each icon with the exact filename shown (e.g., "icon-16.png")</li>
+                <li>Place all icons in the same folder as your index.html file</li>
+            </ol>
+        </div>
+
+        <div class="download-section">
+            <button onclick="generateAllIcons()">Generate All Icons</button>
+            <button onclick="downloadManifest()">Download Complete Manifest</button>
+        </div>
+
+        <div id="icons-container"></div>
+    </div>
+
+    <script>
+        const iconSizes = [16, 32, 48, 72, 96, 144, 192, 512];
+        
+        // Polyfill for roundRect if not available
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.lineTo(x + width - radius, y);
+                this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.lineTo(x + width, y + height - radius);
+                this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.lineTo(x + radius, y + height);
+                this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.lineTo(x, y + radius);
+                this.quadraticCurveTo(x, y, x + radius, y);
+                this.closePath();
+            };
+        }
+        
+        function generateIcon(size) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#ff6b6b');
+            gradient.addColorStop(0.5, '#4ecdc4');
+            gradient.addColorStop(1, '#45b7d1');
+            
+            // Draw rounded rectangle background
+            const radius = size * 0.2;
+            ctx.fillStyle = gradient;
+            ctx.roundRect(0, 0, size, size, radius);
+            ctx.fill();
+            
+            // Add shadow effect
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = size * 0.05;
+            ctx.shadowBlur = size * 0.1;
+            
+            // Draw "LL" text
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.4}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('LL', size / 2, size / 2);
+            
+            return canvas;
+        }
+        
+        function generateAllIcons() {
+            const container = document.getElementById('icons-container');
+            container.innerHTML = '<h2>Generated Icons (Click to Download):</h2>';
+            
+            iconSizes.forEach(size => {
+                const canvas = generateIcon(size);
+                const preview = document.createElement('div');
+                preview.className = 'icon-preview';
+                preview.innerHTML = `
+                    <div class="icon" style="width: ${Math.min(size, 96)}px; height: ${Math.min(size, 96)}px;">
+                        <canvas width="${size}" height="${size}" style="width: 100%; height: 100%; border-radius: 20%; cursor: pointer;"></canvas>
+                    </div>
+                    <div>icon-${size}.png</div>
+                    <div style="font-size: 12px; color: #666;">${size}×${size}</div>
+                `;
+                
+                // Copy canvas content to preview
+                const previewCanvas = preview.querySelector('canvas');
+                const previewCtx = previewCanvas.getContext('2d');
+                previewCtx.drawImage(canvas, 0, 0);
+                
+                // Make canvas downloadable
+                previewCanvas.addEventListener('click', () => {
+                    downloadCanvas(canvas, `icon-${size}.png`);
+                });
+                
+                previewCanvas.title = 'Click to download';
+                
+                container.appendChild(preview);
+            });
+            
+            // Add download all button
+            const downloadAllBtn = document.createElement('button');
+            downloadAllBtn.textContent = 'Download All Icons';
+            downloadAllBtn.onclick = downloadAllIcons;
+            downloadAllBtn.style.marginTop = '20px';
+            container.appendChild(downloadAllBtn);
+        }
+        
+        function downloadCanvas(canvas, filename) {
+            try {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                console.log(`Downloaded: ${filename}`);
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert(`Failed to download ${filename}. Please try again.`);
+            }
+        }
+        
+        function downloadAllIcons() {
+            iconSizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const canvas = generateIcon(size);
+                    downloadCanvas(canvas, `icon-${size}.png`);
+                }, index * 300); // Stagger downloads
+            });
+        }
+        
+        function downloadManifest() {
+            const manifestContent = {
+                "name": "LimitLoop - The Real Worker, Time Saver",
+                "short_name": "LimitLoop",
+                "description": "Track and limit your social media usage to boost productivity",
+                "version": "1.0.0",
+                "start_url": "./index.html",
+                "display": "standalone",
+                "background_color": "#1e1b4b",
+                "theme_color": "#1e1b4b",
+                "orientation": "portrait-primary",
+                "scope": "./",
+                "lang": "en-US",
+                "categories": ["productivity", "lifestyle", "utilities"],
+                "icons": iconSizes.map(size => ({
+                    "src": `icon-${size}.png`,
+                    "sizes": `${size}x${size}`,
+                    "type": "image/png",
+                    "purpose": size >= 192 ? "any maskable" : "any"
+                })),
+                "shortcuts": [
+                    {
+                        "name": "Start Instagram Session",
+                        "url": "./index.html?platform=instagram",
+                        "description": "Quickly start tracking Instagram usage"
+                    },
+                    {
+                        "name": "Start TikTok Session", 
+                        "url": "./index.html?platform=tiktok",
+                        "description": "Quickly start tracking TikTok usage"
+                    },
+                    {
+                        "name": "View Stats",
+                        "url": "./index.html?view=stats",
+                        "description": "View your usage statistics"
+                    }
+                ]
+            };
+            
+            try {
+                const blob = new Blob([JSON.stringify(manifestContent, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.download = 'manifest.json';
+                link.href = URL.createObjectURL(blob);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                console.log('Manifest downloaded successfully');
+            } catch (error) {
+                console.error('Manifest download failed:', error);
+                alert('Failed to download manifest. Please try again.');
+            }
+        }
+        
+        // Auto-generate icons on page load
+        window.addEventListener('load', () => {
+            setTimeout(generateAllIcons, 500);
+        });
+    </script>
+</body>
+</html>
